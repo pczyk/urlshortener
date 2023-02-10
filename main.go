@@ -8,33 +8,35 @@ import (
 	"regexp"
 )
 
-var registrations map[string]string
+type ApplicationState struct {
+	registrations map[string]string
+}
 
 func main() {
-	registrations = make(map[string]string)
+	applicationState := ApplicationState{registrations: make(map[string]string)}
 
-	http.HandleFunc("/", handleRequest)
-	http.HandleFunc("/list/", handleListRequest)
+	http.HandleFunc("/", applicationState.handleRequest)
+	http.HandleFunc("/list/", applicationState.handleListRequest)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func handleRequest(w http.ResponseWriter, r *http.Request) {
+func (as ApplicationState) handleRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		handleRedirectRequest(w, r)
+		as.handleRedirectRequest(w, r)
 	case http.MethodPost:
-		handleRegisterRequest(w, r)
+		as.handleRegisterRequest(w, r)
 	case http.MethodDelete:
-		handleUnregisterRequest(w, r)
+		as.handleUnregisterRequest(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func handleRedirectRequest(w http.ResponseWriter, r *http.Request) {
+func (as ApplicationState) handleRedirectRequest(w http.ResponseWriter, r *http.Request) {
 	redirectPath := r.URL.String()[1:]
-	targetUrl, ok := registrations[redirectPath]
+	targetUrl, ok := as.registrations[redirectPath]
 
 	if ok {
 		http.Redirect(w, r, targetUrl, http.StatusMovedPermanently)
@@ -45,7 +47,7 @@ func handleRedirectRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleRegisterRequest(w http.ResponseWriter, r *http.Request) {
+func (as ApplicationState) handleRegisterRequest(w http.ResponseWriter, r *http.Request) {
 	redirectPath := r.URL.String()[1:]
 	targetUrl, err := io.ReadAll(r.Body)
 
@@ -53,18 +55,18 @@ func handleRegisterRequest(w http.ResponseWriter, r *http.Request) {
 		log.Println("error while registering redirect: " + err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
-		registrations[redirectPath] = string(targetUrl)
+		as.registrations[redirectPath] = string(targetUrl)
 		log.Printf("registered redirect %s -> %s\n", redirectPath, targetUrl)
 		w.WriteHeader(http.StatusCreated)
 	}
 }
 
-func handleUnregisterRequest(w http.ResponseWriter, r *http.Request) {
+func (as ApplicationState) handleUnregisterRequest(w http.ResponseWriter, r *http.Request) {
 	redirectPath := r.URL.String()[1:]
-	_, ok := registrations[redirectPath]
+	_, ok := as.registrations[redirectPath]
 
 	if ok {
-		delete(registrations, redirectPath)
+		delete(as.registrations, redirectPath)
 		log.Printf("unregistered redirect %s\n", redirectPath)
 		w.WriteHeader(http.StatusOK)
 	} else {
@@ -73,8 +75,8 @@ func handleUnregisterRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleListRequest(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(registrations)
+func (as ApplicationState) handleListRequest(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(as.registrations)
 }
 
 func validateRedirectPath(path string) bool {
