@@ -19,6 +19,7 @@ func main() {
 
 	http.HandleFunc("/", applicationState.handleRequest)
 	http.HandleFunc("/list/", applicationState.handleListRequest)
+	http.HandleFunc("/health", applicationState.handleHealthRequest)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
@@ -97,6 +98,10 @@ func (as *ApplicationState) handleListRequest(w http.ResponseWriter, r *http.Req
 	as.Lock()
 	json.NewEncoder(w).Encode(as.registrations)
 	as.Unlock()
+}
+
+func (as *ApplicationState) handleHealthRequest(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }
 
 func validateRedirectPath(path string) bool {

@@ -108,6 +108,20 @@ func TestHandleUnregisterRequestHappyPath(t *testing.T) {
 	}
 }
 
+// GET /health
+func TestHandleHealthRequest(t *testing.T) {
+	r := httptest.NewRequest(http.MethodGet, "/health", nil)
+	w := httptest.NewRecorder()
+
+	applicationState := ApplicationState{}
+
+	applicationState.handleHealthRequest(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET /health expected HTTP 200, but got %d", w.Code)
+	}
+}
+
 func TestValidateRedirectPath(t *testing.T) {
 	type test struct {
 		input string
