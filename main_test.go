@@ -14,7 +14,6 @@ func TestHandleRegisterRequestHappyPath(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	applicationState := ApplicationState{registrations: make(map[string]string)}
-
 	applicationState.handleRegisterRequest(w, r)
 
 	if w.Code != http.StatusCreated {
@@ -34,7 +33,6 @@ func TestHandleRegisterRequestMalformedRedirectPath(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	applicationState := ApplicationState{registrations: make(map[string]string)}
-
 	applicationState.handleRegisterRequest(w, r)
 
 	if w.Code != http.StatusBadRequest {
@@ -57,7 +55,6 @@ func TestHandleRedirectRequestHappyPath(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	applicationState := ApplicationState{registrations: map[string]string{redirectPath: targetUrl}}
-
 	applicationState.handleRedirectRequest(w, r)
 
 	if w.Code != http.StatusMovedPermanently {
@@ -72,6 +69,20 @@ func TestHandleRedirectRequestHappyPath(t *testing.T) {
 
 	if !contains(location, targetUrl) {
 		t.Fatalf("header Location does not contain expected value %s", targetUrl)
+	}
+}
+
+func TestHandleRedirectRequestUnregisteredPath(t *testing.T) {
+	redirectPath := "google"
+
+	r := httptest.NewRequest(http.MethodGet, "/"+redirectPath, nil)
+	w := httptest.NewRecorder()
+
+	applicationState := ApplicationState{registrations: map[string]string{}}
+	applicationState.handleRedirectRequest(w, r)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("GET /%s expected HTTP 404, but got %d", redirectPath, w.Code)
 	}
 }
 
