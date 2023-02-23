@@ -7,8 +7,10 @@ import (
 	"testing"
 )
 
+// POST /{redirectPath}
 func TestHandleRegisterRequestHappyPath(t *testing.T) {
-	r := httptest.NewRequest(http.MethodPost, "/google", strings.NewReader("https://google.com"))
+	redirectPath := "google"
+	r := httptest.NewRequest(http.MethodPost, "/"+redirectPath, strings.NewReader("https://google.com"))
 	w := httptest.NewRecorder()
 
 	applicationState := ApplicationState{registrations: make(map[string]string)}
@@ -16,18 +18,19 @@ func TestHandleRegisterRequestHappyPath(t *testing.T) {
 	applicationState.handleRegisterRequest(w, r)
 
 	if w.Code != http.StatusCreated {
-		t.Fatalf("POST /google expected HTTP 201, but got %d", w.Code)
+		t.Fatalf("POST /%s expected HTTP 201, but got %d", redirectPath, w.Code)
 	}
 
-	_, ok := applicationState.registrations["google"]
+	_, ok := applicationState.registrations[redirectPath]
 
 	if !ok {
-		t.Fatalf("registrations are expected to contain key 'google'")
+		t.Fatalf("registrations are expected to contain key '%s'", redirectPath)
 	}
 }
 
-func TestHandleRegisterRequestBadRedirectPath(t *testing.T) {
-	r := httptest.NewRequest(http.MethodPost, "/;", nil)
+func TestHandleRegisterRequestMalformedRedirectPath(t *testing.T) {
+	redirectPath := ";"
+	r := httptest.NewRequest(http.MethodPost, "/"+redirectPath, nil)
 	w := httptest.NewRecorder()
 
 	applicationState := ApplicationState{registrations: make(map[string]string)}
@@ -35,16 +38,17 @@ func TestHandleRegisterRequestBadRedirectPath(t *testing.T) {
 	applicationState.handleRegisterRequest(w, r)
 
 	if w.Code != http.StatusBadRequest {
-		t.Fatalf("POST /google expected HTTP 400, but got %d", w.Code)
+		t.Fatalf("POST /%s expected HTTP 400, but got %d", redirectPath, w.Code)
 	}
 
-	_, ok := applicationState.registrations[";"]
+	_, ok := applicationState.registrations[redirectPath]
 
 	if ok {
-		t.Fatalf("registrations are NOT expected to contain key ';'")
+		t.Fatalf("registrations are NOT expected to contain key '%s'", redirectPath)
 	}
 }
 
+// GET /{redirectPath}
 func TestHandleRedirectRequestHappyPath(t *testing.T) {
 	redirectPath := "google"
 	targetUrl := "https://google.com"
@@ -57,7 +61,7 @@ func TestHandleRedirectRequestHappyPath(t *testing.T) {
 	applicationState.handleRedirectRequest(w, r)
 
 	if w.Code != http.StatusMovedPermanently {
-		t.Fatalf("POST %s expected HTTP 301, but got %d", redirectPath, w.Code)
+		t.Fatalf("GET /%s expected HTTP 301, but got %d", redirectPath, w.Code)
 	}
 
 	location, ok := w.Result().Header["Location"]
@@ -67,7 +71,29 @@ func TestHandleRedirectRequestHappyPath(t *testing.T) {
 	}
 
 	if !contains(location, targetUrl) {
-		t.Fatal("header Location does not contain expected value ")
+		t.Fatalf("header Location does not contain expected value %s", targetUrl)
+	}
+}
+
+// DELETE /{redirectPath}
+func TestHandleUnregisterRequestHappyPath(t *testing.T) {
+	redirectPath := "google"
+
+	r := httptest.NewRequest(http.MethodDelete, "/"+redirectPath, nil)
+	w := httptest.NewRecorder()
+
+	applicationState := ApplicationState{registrations: map[string]string{redirectPath: "https://google.com"}}
+
+	applicationState.handleUnregisterRequest(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("DELETE /%s expected HTTP 200, but got %d", redirectPath, w.Code)
+	}
+
+	_, ok := applicationState.registrations[redirectPath]
+
+	if ok {
+		t.Fatalf("registrations are NOT expected to contain key '%s'", redirectPath)
 	}
 }
 

@@ -36,6 +36,7 @@ func (as *ApplicationState) handleRequest(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// GET /{redirectPath}
 func (as *ApplicationState) handleRedirectRequest(w http.ResponseWriter, r *http.Request) {
 	redirectPath := r.URL.String()[1:]
 	as.Lock()
@@ -51,6 +52,7 @@ func (as *ApplicationState) handleRedirectRequest(w http.ResponseWriter, r *http
 	}
 }
 
+// POST /{redirectPath}
 func (as *ApplicationState) handleRegisterRequest(w http.ResponseWriter, r *http.Request) {
 	redirectPath := r.URL.String()[1:]
 
@@ -74,6 +76,7 @@ func (as *ApplicationState) handleRegisterRequest(w http.ResponseWriter, r *http
 	}
 }
 
+// DELETE /{redirectPath}
 func (as *ApplicationState) handleUnregisterRequest(w http.ResponseWriter, r *http.Request) {
 	redirectPath := r.URL.String()[1:]
 	as.Lock()
