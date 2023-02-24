@@ -57,7 +57,7 @@ func (as *ApplicationState) handleRedirectRequest(w http.ResponseWriter, r *http
 func (as *ApplicationState) handleRegisterRequest(w http.ResponseWriter, r *http.Request) {
 	redirectPath := r.URL.String()[1:]
 
-	if !validateRedirectPath(redirectPath) {
+	if redirectPath == "health" || !validateRedirectPath(redirectPath) {
 		log.Printf("error while registering redirect: invalid redirect path %v", redirectPath)
 		http.Error(w, "error while registering redirect: invalid redirect path "+redirectPath, http.StatusBadRequest)
 		return

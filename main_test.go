@@ -46,6 +46,25 @@ func TestHandleRegisterRequestMalformedRedirectPath(t *testing.T) {
 	}
 }
 
+func TestHandleRegisterRequestDenyHealthPath(t *testing.T) {
+	redirectPath := "health"
+	r := httptest.NewRequest(http.MethodPost, "/"+redirectPath, strings.NewReader("https://example.org"))
+	w := httptest.NewRecorder()
+
+	applicationState := ApplicationState{registrations: make(map[string]string)}
+	applicationState.handleRegisterRequest(w, r)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("POST /%s expected HTTP 400, but got %d", redirectPath, w.Code)
+	}
+
+	_, ok := applicationState.registrations[redirectPath]
+
+	if ok {
+		t.Fatalf("registrations are NOT expected to contain key '%s'", redirectPath)
+	}
+}
+
 // GET /{redirectPath}
 func TestHandleRedirectRequestHappyPath(t *testing.T) {
 	redirectPath := "google"
