@@ -28,40 +28,30 @@ func TestHandleRegisterRequestHappyPath(t *testing.T) {
 }
 
 func TestHandleRegisterRequestMalformedRedirectPath(t *testing.T) {
-	redirectPath := ";"
-	r := httptest.NewRequest(http.MethodPost, "/"+redirectPath, nil)
-	w := httptest.NewRecorder()
-
-	applicationState := ApplicationState{registrations: make(map[string]string)}
-	applicationState.handleRegisterRequest(w, r)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("POST /%s expected HTTP 400, but got %d", redirectPath, w.Code)
+	tests := []struct {
+		redirectPath   string
+		wantStatusCode int
+	}{
+		{";", http.StatusBadRequest},
+		{"health", http.StatusBadRequest},
 	}
 
-	_, ok := applicationState.registrations[redirectPath]
+	for _, tt := range tests {
+		r := httptest.NewRequest(http.MethodPost, "/"+tt.redirectPath, nil)
+		w := httptest.NewRecorder()
 
-	if ok {
-		t.Fatalf("registrations are NOT expected to contain key '%s'", redirectPath)
-	}
-}
+		applicationState := ApplicationState{registrations: make(map[string]string)}
+		applicationState.handleRegisterRequest(w, r)
 
-func TestHandleRegisterRequestDenyHealthPath(t *testing.T) {
-	redirectPath := "health"
-	r := httptest.NewRequest(http.MethodPost, "/"+redirectPath, strings.NewReader("https://example.org"))
-	w := httptest.NewRecorder()
+		if w.Code != tt.wantStatusCode {
+			t.Fatalf("POST /%s expected HTTP %d, but got %d", tt.redirectPath, tt.wantStatusCode, w.Code)
+		}
 
-	applicationState := ApplicationState{registrations: make(map[string]string)}
-	applicationState.handleRegisterRequest(w, r)
+		_, ok := applicationState.registrations[tt.redirectPath]
 
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("POST /%s expected HTTP 400, but got %d", redirectPath, w.Code)
-	}
-
-	_, ok := applicationState.registrations[redirectPath]
-
-	if ok {
-		t.Fatalf("registrations are NOT expected to contain key '%s'", redirectPath)
+		if ok {
+			t.Fatalf("registrations are NOT expected to contain key '%s'", tt.redirectPath)
+		}
 	}
 }
 
