@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: Url Shortener API
+  description: |-
+    API definition for
+  version: 0.0.1
+servers:
+  - url: http://localhost:8080  
+tags:
+  - name: redirect
+    description: Managing and applying redirects
+paths:
+  /{redirectPath}:
+    parameters:
+    - name: redirectPath
+      in: path
+      description: registered redirect path
+      required: true
+      schema:
+        type: string
+    get:
+      tags:
+        - redirect
+      summary: Redirect to a registered target URL
+      description: Redirect to a registered target URL
+      operationId: getRedirectPath
+      responses:
+        '301':
+          description: Successful redirect to registered target (target can be found in Location header)
+        '404':
+          description: No target registered under {redirectPath}
+    post:
+      tags:
+        - redirect
+      summary: Register a target URL
+      description: Register a target URL as {redirectPath}
+      operationId: postRedirectPath
+      requestBody:
+        description: Target URL to be registered as {redirectPath}
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: https://google.com
+        required: true
+      responses:
+        '201':
+          description: Successful operation - target URL registered under {redirectPath}
+        '400':
+          description: Invalid input (not in [a-zA-Z0-9] or reserved keyword 'health')
+    delete:
+      tags:
+        - redirect
+      summary: Unregister a {redirectPath}
+      description: Unregister a {redirectPath} which will not be served via GET /{redirectPath} any longer
+      operationId: deleteRedirectPath
+      responses:
+        '200':
+          description: Successful operation - target URL no longer registered under {redirectPath}
+        '404':
+          description: Path {redirectPath} not registered
